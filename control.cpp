@@ -185,7 +185,7 @@ void led_control(void)
   else if (Arm_flag ==2 && Flight_mode == LINETRACE) rgbled_lightblue();
   else if (Arm_flag ==2 && Flight_mode == REDCIRCLE) rgbled_pink();
   //else if (Arm_flag ==2 && Flight_mode == FAILSAFE) rgbled_failsafe();
-  else if ((Arm_flag ==2) && (Flight_mode == SERVO)) rgbled_blue();
+  // else if ((Arm_flag ==2) && (Flight_mode == SERVO)) rgbled_blue();
   
   else if (Arm_flag == 2 && Red_flag == 1) rgbled_red();
   
@@ -433,8 +433,8 @@ void control_init(void)
 {
   acc_filter.set_parameter(0.005, 0.0025);
   //Rate control
-  p_pid.set_parameter( 2.8 , 0.5, 0.01, 0.125, 0.0025);//(2.2, 5, 0.01)
-  q_pid.set_parameter( 2.8, 0.5, 0.01, 0.125, 0.0025);//(1.5, 1, 0.01)
+  p_pid.set_parameter( 2.8 , 0.8, 0.01, 0.125, 0.0025);//(2.2, 5, 0.01)
+  q_pid.set_parameter( 2.8, 0.8, 0.01, 0.125, 0.0025);//(1.5, 1, 0.01)
   r_pid.set_parameter( 3.1, 1, 0.01, 0.125, 0.0025);//(3.1, 1, 0.01)
   //Angle control
   phi_pid.set_parameter  ( 8.0, 1.0, 0.02, 0.125, 0.01);//6.0
@@ -675,12 +675,19 @@ void rate_control(void)
     Red_flag = 0;
     // Rocking_timer = 0.0;
   }
-  else if((Chdata[SERVO] < 200) && (Chdata[REDCIRCLE] < 200) &&  (Chdata[LOG] < 200) && (Chdata[LINETRACE] > 500) && (Chdata[ROCKING] < 200)&& i2c_connect == 0)
+  else if((Chdata[SERVO] < 200) && (Chdata[REDCIRCLE] < 200) &&  (Chdata[LOG] < 200) && (Chdata[LINETRACE] > 500) && (Chdata[ROCKING] < 200) && i2c_connect == 0)
   {
     Flight_mode = NORMAL;
     Red_flag = 0;
     // Rocking_timer = 0.0;
   }
+  else if((Chdata[SERVO] < 200) && (Chdata[REDCIRCLE] < 200) &&  (Chdata[LOG] < 200) && (Chdata[LINETRACE] < 200) && (Chdata[ROCKING] < 200))
+  {
+    Flight_mode = NORMAL;
+    Red_flag = 0;
+    // Rocking_timer = 0.0;
+  }
+  
   else if((Chdata[SERVO] < 200) && (Chdata[REDCIRCLE] > 500) &&  (Chdata[LOG] < 200) && (Chdata[LINETRACE] < 200) && (Chdata[ROCKING] < 200))
   {
     Flight_mode = REDCIRCLE;
@@ -691,10 +698,7 @@ void rate_control(void)
   {
     Flight_mode = SERVO;
   }
-  else if((Chdata[SERVO] < 200) && (Chdata[REDCIRCLE] < 200) &&  (Chdata[LOG] < 200) && (Chdata[LINETRACE] < 200) && (Chdata[ROCKING] < 200))
-  {
-    Flight_mode = NORMAL;
-  }
+ 
   else{}
 
   //Get Bias
@@ -711,7 +715,7 @@ void rate_control(void)
   p_ref = Pref;
   q_ref = Qref;
   r_ref = Rref;
-  T_ref = 0.6 * BATTERY_VOLTAGE*(float)(Chdata[2]-CH3MIN)/(CH3MAX-CH3MIN);
+  if(Flight_mode != LINETRACE) T_ref = 0.6 * BATTERY_VOLTAGE*(float)(Chdata[2]-CH3MIN)/(CH3MAX-CH3MIN);
 
   // //高度制御テスト用のコード
   // if(Chdata[SERVO] > 500){
@@ -1072,7 +1076,8 @@ void linetrace(void)
 void logging(void)
 {  
   //Logging
-  if(Chdata[4]>(CH5MAX+CH5MIN)*0.5)
+  // if(Chdata[4]>(CH5MAX+CH5MIN)*0.5)
+  if(Chdata[LOG]> 200)
   { 
     if(Logflag==0)
     {
